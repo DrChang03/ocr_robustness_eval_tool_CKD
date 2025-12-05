@@ -34,7 +34,7 @@ The system adheres to a strict "Privacy-by-Design" architecture. All image proce
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/ocr-robustness-eval-tool.git
+git clone https://github.com/DrChang03/ocr-robustness-eval-tool.git
 
 # Install dependencies
 flutter pub get
