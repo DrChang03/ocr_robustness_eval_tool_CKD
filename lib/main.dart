@@ -17,6 +17,8 @@ class OcrScannerScreen extends StatefulWidget {
 class _OcrScannerScreenState extends State<OcrScannerScreen> {
   // Initial UI state (German for local user context)
   String _extractedText = "Bitte scannen Sie die Zutatenliste..."; 
+  String _debugText = "";
+  Color _statusColor = Colors.black;
   File? _imageFile;
 
   // --- Core Function: Image Capture & Intelligent Analysis ---
@@ -30,6 +32,8 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
 
       setState(() {
         _extractedText = " Analyse läuft..."; // "Analysis running..."
+        _debugText = "";
+        _statusColor = Colors.black;
         _imageFile = File(photo.path);
       });
 
@@ -77,6 +81,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       }
       
       String statusMessage = "";
+      Color newColor = Colors.black;
       
       if (foundDangers.isNotEmpty) {
         // CRITICAL WARNING (UI: German)
@@ -84,23 +89,28 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
           "\n\n ACHTUNG: KRITISCHE INHALTSSTOFFE \n" 
           "\nGefundene Risikostoffe:\n"                 
           " ${foundDangers.join(", ")}\n"             
-          "\n Empfehlung: Für Nierenpatienten nicht geeignet."; 
+          "\n Für Nierenpatienten nicht geeignet."; 
+        newColor = Colors.red;
       } else if (rawText.length < 5) {
         //  ERROR: No text detected
         statusMessage = "\n\n Fehler: Kein Text erkannt.\nBitte versuchen Sie es erneut.";
+        newColor = Colors.orange;
       } else {
         //  SAFE: No keywords found
         statusMessage = 
           "\n\n Unbedenklich (Scheinbar sicher)\n" 
           "\nKeine kritischen Phosphate oder Kaliumzusätze erkannt.\n"
           "(Hinweis: Diese Analyse ersetzt keinen ärztlichen Rat.)"; 
+        newColor = Colors.green;
       }
 
       // Debug Info (Hidden in production, visible for Thesis evaluation)
       String debugInfo = "\n\n-------------------\n[RAW OCR DATA]:\n$rawText";
 
       setState(() {
-        _extractedText = statusMessage + debugInfo;
+        _extractedText = statusMessage;
+        _debugText = debugInfo;
+        _statusColor = newColor;
       });
 
       textRecognizer.close();
@@ -108,6 +118,8 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
     } catch (e) {
       setState(() {
         _extractedText = "Ein Fehler ist aufgetreten: $e";
+        _debugText = "";
+        _statusColor = Colors.red;
       });
     }
   }
@@ -140,9 +152,18 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
             // Result Text Area
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text(
-                _extractedText,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _extractedText,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _statusColor),
+                  ),
+                  Text(
+                    _debugText,
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                ],
               ),
             ),
           ],
