@@ -129,9 +129,27 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. Image Preview
-            if (_imageFile != null)
-              Image.file(_imageFile!, height: 250, width: double.infinity, fit: BoxFit.cover)
+            // 1. Image Display Area
+            if (_imageFile != null) // Show the captured image
+              Image.file(
+                _imageFile!,
+                height: 250,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 250,
+                  color: Colors.grey[200],
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                      Text("Bild konnte nicht geladen werden", style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                );
+              },
+              )
             else
               Container(
                 height: 250,
