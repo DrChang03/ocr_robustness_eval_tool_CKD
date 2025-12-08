@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
+// --- FIX: Ensure main calls MaterialApp directly ---
 void main() {
-  runApp(const MaterialApp(home: OcrScannerScreen()));
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false, // Remove the "Debug" banner
+    home: OcrScannerScreen()
+  ));
 }
 
 class OcrScannerScreen extends StatefulWidget {
@@ -15,111 +19,102 @@ class OcrScannerScreen extends StatefulWidget {
 }
 
 class _OcrScannerScreenState extends State<OcrScannerScreen> {
-  // Initial UI state (German for local user context)
-  String _extractedText = "Bitte scannen Sie die Zutatenliste..."; 
-  String _debugText = "";
-  Color _statusColor = Colors.black;
+  // --- UI State Variables ---
   File? _imageFile;
+  
+  // 1. Status Title
+  String _resultTitle = "Bereit zum Scannen"; 
+  // 2. Detailed Message
+  String _resultBody = "Bitte fotografieren Sie die Zutatenliste.";
+  // 3. Debug Info
+  String _debugText = "";
+  // 4. Color State
+  Color _statusColor = Colors.grey;
 
-  // --- Core Function: Image Capture & Intelligent Analysis ---
+  // --- Core Function ---
   Future<void> _scanImage() async {
     try {
-      // 1. Initialize Camera
       final ImagePicker picker = ImagePicker();
       final XFile? photo = await picker.pickImage(source: ImageSource.camera);
       
-      if (photo == null) return; // User cancelled
+      if (photo == null) return; 
 
       setState(() {
-        _extractedText = " Analyse läuft..."; // "Analysis running..."
-        _debugText = "";
-        _statusColor = Colors.black;
+        _resultTitle = "⏳ Analyse läuft...";
+        _resultBody = "Bitte warten...";
+        _statusColor = Colors.blue; 
         _imageFile = File(photo.path);
+        _debugText = "";
       });
 
-      // 2. Prepare Input Image for ML Kit
+      // OCR Processing
       final inputImage = InputImage.fromFilePath(photo.path);
       final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
-      
-      // 3. Perform OCR (On-Device)
       final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
       
-      // Convert to lowercase for case-insensitive matching
       String rawText = recognizedText.text.toLowerCase(); 
 
-      // --- 4. Filtering Algorithm (Project LifeGuard Logic) ---
-      // Detection of CKD-relevant keywords in German context
-      final List<String> dangerKeywords = [
-        // Phosphates
-        "phosphat",       // Generic root
-        "diphosphat",     // E450
-        "triphosphat",    // E451
-        "polyphosphat",   // E452
-        "phosphorsäure",  // Phosphoric acid
-        
-        // E-Numbers (Critical for German market)
-        "e338", "e339", "e340", "e341", 
-        "e450", "e451", "e452",
-        
-        // Potassium (Kalium)
-        "kalium", 
-        "kaliumchlorid",  
-        "kaliumcitrat",
-        
-        // Others
-        "geschmacksverstärker", // Flavor enhancers (often contain phosphate)
-        "natriumnitrit"         // Sodium nitrite
-      ];
+      // --- V3.0 UPGRADE: Regex Logic (Robustness) ---
+      // Instead of simple strings, we use Regex to handle spaces like "E 450"
+      final Map<String, RegExp> dangerPatterns = {
+        "PHOSPHAT": RegExp(r"phospha[t|d]", caseSensitive: false), // Matches Phosphat/Phosphad
+        "E450 (Diphosphat)": RegExp(r"e\s*450", caseSensitive: false), // Matches E450, E 450, E-450
+        "E338": RegExp(r"e\s*338", caseSensitive: false),
+        "E339": RegExp(r"e\s*339", caseSensitive: false),
+        "E340": RegExp(r"e\s*340", caseSensitive: false),
+        "E341": RegExp(r"e\s*341", caseSensitive: false),
+        "E451": RegExp(r"e\s*451", caseSensitive: false),
+        "E452": RegExp(r"e\s*452", caseSensitive: false),
+        "KALIUM": RegExp(r"kalium", caseSensitive: false),
+        "GESCHMACKSVERSTÄRKER": RegExp(r"geschmacksverstärker", caseSensitive: false),
+        "NATRIUMNITRIT": RegExp(r"natriumnitrit", caseSensitive: false),
+      };
 
       List<String> foundDangers = [];
 
-      // Iterate through keywords
-      for (var keyword in dangerKeywords) {
-        if (rawText.contains(keyword)) {
-          foundDangers.add(keyword.toUpperCase());
+      // Iterate through Regex patterns
+      dangerPatterns.forEach((name, pattern) {
+        if (pattern.hasMatch(rawText)) {
+          foundDangers.add(name);
         }
-      }
+      });
       
-      String statusMessage = "";
-      Color newColor = Colors.black;
+      // --- Result Logic ---
       
       if (foundDangers.isNotEmpty) {
-        // CRITICAL WARNING (UI: German)
-        statusMessage = 
-          "\n\n ACHTUNG: KRITISCHE INHALTSSTOFFE \n" 
-          "\nGefundene Risikostoffe:\n"                 
-          " ${foundDangers.join(", ")}\n"             
-          "\n Für Nierenpatienten nicht geeignet."; 
-        newColor = Colors.red;
-      } else if (rawText.length < 5) {
-        //  ERROR: No text detected
-        statusMessage = "\n\n Fehler: Kein Text erkannt.\nBitte versuchen Sie es erneut.";
-        newColor = Colors.orange;
+        //  RED: DANGER
+        setState(() {
+          _statusColor = Colors.red;
+          _resultTitle = "ACHTUNG: KRITISCH";
+          _resultBody = "Gefundene Risikostoffe:\n ${foundDangers.join(", ")}\n\nNicht geeignet für Nierenpatienten!";
+        });
+      } else if (rawText.length < 10) {
+        //  ORANGE: UNCERTAIN
+        setState(() {
+          _statusColor = Colors.orange;
+          _resultTitle = "Scan unsicher";
+          _resultBody = "Zu wenig Text erkannt. Bitte Bild schärfer aufnehmen.";
+        });
       } else {
-        //  SAFE: No keywords found
-        statusMessage = 
-          "\n\n Unbedenklich (Scheinbar sicher)\n" 
-          "\nKeine kritischen Phosphate oder Kaliumzusätze erkannt.\n"
-          "(Hinweis: Diese Analyse ersetzt keinen ärztlichen Rat.)"; 
-        newColor = Colors.green;
+        //  GREEN: SAFE
+        setState(() {
+          _statusColor = Colors.green;
+          _resultTitle = "Unbedenklich";
+          _resultBody = "Keine kritischen Phosphate oder Kaliumzusätze erkannt.\n(Scheinbar sicher)";
+        });
       }
 
-      // Debug Info (Hidden in production, visible for Thesis evaluation)
-      String debugInfo = "\n\n-------------------\n[RAW OCR DATA]:\n$rawText";
-
       setState(() {
-        _extractedText = statusMessage;
-        _debugText = debugInfo;
-        _statusColor = newColor;
+        _debugText = "[RAW DATA]:\n$rawText";
       });
 
       textRecognizer.close();
 
     } catch (e) {
       setState(() {
-        _extractedText = "Ein Fehler ist aufgetreten: $e";
-        _debugText = "";
-        _statusColor = Colors.red;
+        _statusColor = Colors.grey;
+        _resultTitle = "Fehler";
+        _resultBody = e.toString();
       });
     }
   }
@@ -128,48 +123,91 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("MedicalSnap (Prototyp)"), 
+        title: const Text("Mobile OCR Tool (Prototyp)"), 
         backgroundColor: Colors.teal, 
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Image Preview Area
+            // 1. Image Preview
             if (_imageFile != null)
-              Image.file(_imageFile!, height: 300, fit: BoxFit.cover)
+              Image.file(_imageFile!, height: 250, width: double.infinity, fit: BoxFit.cover)
             else
               Container(
-                height: 300,
+                height: 250,
+                width: double.infinity,
                 color: Colors.grey[200],
                 child: const Center(
-                  child: Text("Bitte Zutatenliste scannen", 
-                    style: TextStyle(color: Colors.grey, fontSize: 18)),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.camera_alt, size: 50, color: Colors.grey),
+                      SizedBox(height: 10),
+                      Text("Bitte Zutatenliste scannen", style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
                 ),
               ),
             
             const SizedBox(height: 20),
             
-            // Result Text Area
+            // 2. THE DIAGNOSIS CARD
             Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: _statusColor.withOpacity(0.1), 
+                  border: Border.all(color: _statusColor, width: 2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      _statusColor == Colors.red ? Icons.warning_amber_rounded : 
+                      _statusColor == Colors.green ? Icons.check_circle_outline : Icons.help_outline,
+                      size: 48,
+                      color: _statusColor,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _resultTitle,
+                      style: TextStyle(
+                        fontSize: 22, 
+                        fontWeight: FontWeight.bold,
+                        color: _statusColor,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _resultBody,
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // 3. Debug Info
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: ExpansionTile(
+                title: const Text("Entwickler-Protokoll (Raw Data)", style: TextStyle(fontSize: 12, color: Colors.grey)),
                 children: [
-                  Text(
-                    _extractedText,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _statusColor),
-                  ),
-                  Text(
-                    _debugText,
-                    style: const TextStyle(fontSize: 14, color: Colors.black),
-                  ),
+                  Text(_debugText, style: const TextStyle(fontSize: 10, color: Colors.grey)),
                 ],
               ),
             ),
+            
+            const SizedBox(height: 50),
           ],
         ),
       ),
-      // Scan Button
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _scanImage,
         backgroundColor: Colors.teal,
