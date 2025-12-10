@@ -44,7 +44,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
         _resultBody = "Bitte warten...";
         _statusColor = Colors.blue; 
         _imageFile = File(photo.path);
-        _debugText = "";
+        _debugText = ""; // FIX: Clear debug text while loading
       });
 
       // OCR Processing
@@ -108,6 +108,17 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
         _debugText = "[RAW DATA]:\n$rawText";
       });
 
+      // --- LOGGING FOR EXPERIMENT ---
+      debugPrint("--------------------------------------------------");
+      debugPrint("EXP_LOG_START");
+      debugPrint("Time: ${DateTime.now()}");
+      debugPrint("Raw_Text_Length: ${rawText.length}"); 
+      debugPrint("Detected_Keywords: ${foundDangers.join(", ")}");
+      debugPrint("Full_Text_Cleaned: ${rawText.replaceAll('\n', ' ')}"); 
+      debugPrint("EXP_LOG_END");
+      debugPrint("--------------------------------------------------");
+      // --- END LOGGING ---
+
       textRecognizer.close();
 
     } catch (e) {
@@ -137,18 +148,18 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 250,
-                  color: Colors.grey[200],
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                      Text("Bild konnte nicht geladen werden", style: TextStyle(color: Colors.grey)),
-                    ],
-                  ),
-                );
-              },
+                  return Container(
+                    height: 250,
+                    color: Colors.grey[200],
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                        Text("Bild konnte nicht geladen werden", style: TextStyle(color: Colors.grey)),
+                      ],
+                    ),
+                  );
+                },
               )
             else
               Container(
