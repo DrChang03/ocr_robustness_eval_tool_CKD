@@ -40,7 +40,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       if (photo == null) return; 
 
       setState(() {
-        _resultTitle = "⏳ Analyse läuft...";
+        _resultTitle = "Analyse läuft...";
         _resultBody = "Bitte warten...";
         _statusColor = Colors.blue; 
         _imageFile = File(photo.path);
@@ -68,6 +68,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
         "KALIUM": RegExp(r"kalium", caseSensitive: false),
         "GESCHMACKSVERSTÄRKER": RegExp(r"geschmacksverstärker", caseSensitive: false),
         "NATRIUMNITRIT": RegExp(r"natriumnitrit", caseSensitive: false),
+        "PHOSPHORSÄURE": RegExp(r"phosphorsäure[n]", caseSensitive: false),
       };
 
       List<String> foundDangers = [];
