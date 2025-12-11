@@ -54,21 +54,26 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       
       String rawText = recognizedText.text.toLowerCase(); 
 
-      // --- V3.0 UPGRADE: Regex Logic (Robustness) ---
-      // Instead of simple strings, we use Regex to handle spaces like "E 450"
+      // --- V3.1 UPGRADE: Enhanced Regex Logic (Based on REWE Field Text) ---
       final Map<String, RegExp> dangerPatterns = {
-        "PHOSPHAT": RegExp(r"phospha[t|d]", caseSensitive: false), // Matches Phosphat/Phosphad
-        "E450 (Diphosphat)": RegExp(r"e\s*450", caseSensitive: false), // Matches E450, E 450, E-450
+        //Fix 1: Cover "Phosphat" and "Phosphorsäure" variations
+        "PHOSPHAT/SÄURE": RegExp(r"phosph[a|o]", caseSensitive: false), // Matches Phosphat/Phosphad
+
+        //Fix 2: Cover E450 variations with spaces or hyphens
+        "E450 (Diphosphat)": RegExp(r"e[\s:-]*450", caseSensitive: false),  // Matches E450, E 450, E-450
+        
         "E338": RegExp(r"e\s*338", caseSensitive: false),
         "E339": RegExp(r"e\s*339", caseSensitive: false),
         "E340": RegExp(r"e\s*340", caseSensitive: false),
         "E341": RegExp(r"e\s*341", caseSensitive: false),
         "E451": RegExp(r"e\s*451", caseSensitive: false),
         "E452": RegExp(r"e\s*452", caseSensitive: false),
-        "KALIUM": RegExp(r"kalium", caseSensitive: false),
+        
+        //Fix 3: Fix OCR false read of "Kalium" as "Kallum" or "Kalilum"
+        //Logic: "K" with any character in between and "lium"
+        "KALIUM": RegExp(r"k.lium", caseSensitive: false),
         "GESCHMACKSVERSTÄRKER": RegExp(r"geschmacksverstärker", caseSensitive: false),
         "NATRIUMNITRIT": RegExp(r"natriumnitrit", caseSensitive: false),
-        "PHOSPHORSÄURE": RegExp(r"phosphorsäure[n]", caseSensitive: false),
       };
 
       List<String> foundDangers = [];
