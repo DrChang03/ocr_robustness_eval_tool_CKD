@@ -2,11 +2,19 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+// Supabase initialization
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-// --- FIX: Ensure main calls MaterialApp directly ---
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://noytsdkyxxhhtbhfedva.supabase.co', 
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5veXRzZGt5eHhoaHRiaGZlZHZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0Nzc3MzYsImV4cCI6MjA4MTA1MzczNn0.PmEQhLVBcKA_xKMGC1vqpJe_rG1BMXIQsY4jQ8ASsEY', 
+  );
+
   runApp(const MaterialApp(
-    debugShowCheckedModeBanner: false, // Remove the "Debug" banner
+    debugShowCheckedModeBanner: false,
     home: OcrScannerScreen()
   ));
 }
@@ -19,19 +27,15 @@ class OcrScannerScreen extends StatefulWidget {
 }
 
 class _OcrScannerScreenState extends State<OcrScannerScreen> {
-  // --- UI State Variables ---
   File? _imageFile;
-  
-  // 1. Status Title
   String _resultTitle = "Bereit zum Scannen"; 
-  // 2. Detailed Message
   String _resultBody = "Bitte fotografieren Sie die Zutatenliste.";
-  // 3. Debug Info
   String _debugText = "";
-  // 4. Color State
   Color _statusColor = Colors.grey;
 
-  // --- Core Function ---
+  //Get Supabase client instance
+  final _supabase = Supabase.instance.client;
+
   Future<void> _scanImage() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -41,72 +45,58 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
 
       setState(() {
         _resultTitle = "Analyse läuft...";
-        _resultBody = "Bitte warten...";
+        _resultBody = "Bitte warten... Uploading to Frankfurt...";
         _statusColor = Colors.blue; 
         _imageFile = File(photo.path);
-        _debugText = ""; // FIX: Clear debug text while loading
+        _debugText = ""; 
       });
 
-      // OCR Processing
       final inputImage = InputImage.fromFilePath(photo.path);
       final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
       final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
       
       String rawText = recognizedText.text.toLowerCase(); 
 
-      // --- V3.1 UPGRADE: Enhanced Regex Logic (Based on REWE Field Text) ---
+      // --- V3.1 Regex Logic (Rewe Tested) ---
       final Map<String, RegExp> dangerPatterns = {
-        //Fix 1: Cover "Phosphat" and "Phosphorsäure" variations
-        "PHOSPHAT/SÄURE": RegExp(r"phosph[a|o]", caseSensitive: false), // Matches Phosphat/Phosphad
-
-        //Fix 2: Cover E450 variations with spaces or hyphens
-        "E450 (Diphosphat)": RegExp(r"e[\s:-]*450", caseSensitive: false),  // Matches E450, E 450, E-450
-        
-        "E338": RegExp(r"e\s*338", caseSensitive: false),
-        "E339": RegExp(r"e\s*339", caseSensitive: false),
-        "E340": RegExp(r"e\s*340", caseSensitive: false),
-        "E341": RegExp(r"e\s*341", caseSensitive: false),
-        "E451": RegExp(r"e\s*451", caseSensitive: false),
-        "E452": RegExp(r"e\s*452", caseSensitive: false),
-        
-        //Fix 3: Fix OCR false read of "Kalium" as "Kallum" or "Kalilum"
-        //Logic: "K" with any character in between and "lium"
+        "PHOSPHAT/SÄURE": RegExp(r"phosph[a|o]", caseSensitive: false), 
+        "E450 (Diphosphat)": RegExp(r"e[\s:-]*450", caseSensitive: false), 
+        "E338": RegExp(r"e[\s:-]*338", caseSensitive: false),
+        "E339": RegExp(r"e[\s:-]*339", caseSensitive: false),
+        "E340": RegExp(r"e[\s:-]*340", caseSensitive: false),
+        "E341": RegExp(r"e[\s:-]*341", caseSensitive: false),
+        "E451": RegExp(r"e[\s:-]*451", caseSensitive: false),
+        "E452": RegExp(r"e[\s:-]*452", caseSensitive: false),
         "KALIUM": RegExp(r"k.lium", caseSensitive: false),
         "GESCHMACKSVERSTÄRKER": RegExp(r"geschmacksverstärker", caseSensitive: false),
         "NATRIUMNITRIT": RegExp(r"natriumnitrit", caseSensitive: false),
       };
 
       List<String> foundDangers = [];
-
-      // Iterate through Regex patterns
       dangerPatterns.forEach((name, pattern) {
         if (pattern.hasMatch(rawText)) {
           foundDangers.add(name);
         }
       });
       
-      // --- Result Logic ---
-      
+      // --- UI Logic ---
       if (foundDangers.isNotEmpty) {
-        //  RED: DANGER
         setState(() {
           _statusColor = Colors.red;
           _resultTitle = "ACHTUNG: KRITISCH";
-          _resultBody = "Gefundene Risikostoffe:\n ${foundDangers.join(", ")}\n\nNicht geeignet für Nierenpatienten!";
+          _resultBody = "Gefundene Risikostoffe:\n ${foundDangers.join(", ")}";
         });
       } else if (rawText.length < 10) {
-        //  ORANGE: UNCERTAIN
         setState(() {
           _statusColor = Colors.orange;
           _resultTitle = "Scan unsicher";
-          _resultBody = "Zu wenig Text erkannt. Bitte Bild schärfer aufnehmen.";
+          _resultBody = "Zu wenig Text erkannt.";
         });
       } else {
-        //  GREEN: SAFE
         setState(() {
           _statusColor = Colors.green;
           _resultTitle = "Unbedenklich";
-          _resultBody = "Keine kritischen Phosphate oder Kaliumzusätze erkannt.\n(Scheinbar sicher)";
+          _resultBody = "Keine kritischen Stoffe erkannt.";
         });
       }
 
@@ -114,16 +104,9 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
         _debugText = "[RAW DATA]:\n$rawText";
       });
 
-      // --- LOGGING FOR EXPERIMENT ---
-      debugPrint("--------------------------------------------------");
-      debugPrint("EXP_LOG_START");
-      debugPrint("Time: ${DateTime.now()}");
-      debugPrint("Raw_Text_Length: ${rawText.length}"); 
-      debugPrint("Detected_Keywords: ${foundDangers.join(", ")}");
-      debugPrint("Full_Text_Cleaned: ${rawText.replaceAll('\n', ' ')}"); 
-      debugPrint("EXP_LOG_END");
-      debugPrint("--------------------------------------------------");
-      // --- END LOGGING ---
+      // --- CLOUD UPLOAD (Data Collection) ---
+      // This code quietly uploads what you scanned to Frankfurt
+      await _uploadToSupabase(rawText, foundDangers.join(", "));
 
       textRecognizer.close();
 
@@ -136,57 +119,34 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
     }
   }
 
+  // Upload scanned data to Supabase
+  Future<void> _uploadToSupabase(String rawText, String detected) async {
+    try {
+      await _supabase.from('field_test_data').insert({
+        'ocr_raw_text': rawText,
+        'detected_keywords': detected,
+        'material_type': 'Unknown (App Scan)', 
+        'product_name': 'Scan at ${DateTime.now().hour}:${DateTime.now().minute}',
+      });
+      debugPrint("Data uploaded to Supabase!");
+    } catch (e) {
+      debugPrint("Upload failed: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Mobile OCR Tool (Prototyp)"), 
-        backgroundColor: Colors.teal, 
-      ),
+      appBar: AppBar(title: const Text("MedicalSnap Cloud v1"), backgroundColor: Colors.teal),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. Image Display Area
-            if (_imageFile != null) // Show the captured image
-              Image.file(
-                _imageFile!,
-                height: 250,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 250,
-                    color: Colors.grey[200],
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                        Text("Bild konnte nicht geladen werden", style: TextStyle(color: Colors.grey)),
-                      ],
-                    ),
-                  );
-                },
-              )
-            else
-              Container(
-                height: 250,
-                width: double.infinity,
-                color: Colors.grey[200],
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.camera_alt, size: 50, color: Colors.grey),
-                      SizedBox(height: 10),
-                      Text("Bitte Zutatenliste scannen", style: TextStyle(color: Colors.grey)),
-                    ],
-                  ),
-                ),
-              ),
+            if (_imageFile != null) 
+              Image.file(_imageFile!, height: 250, width: double.infinity, fit: BoxFit.cover,
+                errorBuilder: (c,e,s) => Container(height: 250, color: Colors.grey, child: const Icon(Icons.broken_image))),
             
             const SizedBox(height: 20),
             
-            // 2. THE DIAGNOSIS CARD
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Container(
@@ -205,49 +165,27 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
                       size: 48,
                       color: _statusColor,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _resultTitle,
-                      style: TextStyle(
-                        fontSize: 22, 
-                        fontWeight: FontWeight.bold,
-                        color: _statusColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _resultBody,
-                      style: const TextStyle(fontSize: 16, color: Colors.black87),
-                      textAlign: TextAlign.center,
-                    ),
+                    Text(_resultTitle, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _statusColor)),
+                    Text(_resultBody, textAlign: TextAlign.center),
                   ],
                 ),
               ),
             ),
-
-            const SizedBox(height: 30),
-
-            // 3. Debug Info
-            Padding(
+             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: ExpansionTile(
-                title: const Text("Entwickler-Protokoll (Raw Data)", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                children: [
-                  Text(_debugText, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                ],
+                title: const Text("Raw Data", style: TextStyle(fontSize: 12)),
+                children: [Text(_debugText, style: const TextStyle(fontSize: 10))],
               ),
             ),
-            
-            const SizedBox(height: 50),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _scanImage,
         backgroundColor: Colors.teal,
-        icon: const Icon(Icons.camera_alt),
-        label: const Text("Scannen"),
+        icon: const Icon(Icons.cloud_upload),
+        label: const Text("Scan & Upload"),
       ),
     );
   }
