@@ -57,17 +57,17 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       
       String rawText = recognizedText.text.toLowerCase(); 
 
-      // --- V3.1 Regex Logic (Rewe Tested) ---
+      // --- V3.2 Regex Logic (Rewe Tested) ---
       final Map<String, RegExp> dangerPatterns = {
         "PHOSPHAT/SÄURE": RegExp(r"phosph[a|o]", caseSensitive: false), 
-        "E450 (Diphosphat)": RegExp(r"e[\s:-]*450", caseSensitive: false), 
+        "E450 (Diphosphat)": RegExp(r"e[\s:.-]*450", caseSensitive: false), 
         "E338": RegExp(r"e[\s:-]*338", caseSensitive: false),
         "E339": RegExp(r"e[\s:-]*339", caseSensitive: false),
         "E340": RegExp(r"e[\s:-]*340", caseSensitive: false),
         "E341": RegExp(r"e[\s:-]*341", caseSensitive: false),
         "E451": RegExp(r"e[\s:-]*451", caseSensitive: false),
         "E452": RegExp(r"e[\s:-]*452", caseSensitive: false),
-        "KALIUM": RegExp(r"k.lium", caseSensitive: false),
+        "KALIUM": RegExp(r"k[a|o]l[i]?ium", caseSensitive: false),
         "GESCHMACKSVERSTÄRKER": RegExp(r"geschmacksverstärker", caseSensitive: false),
         "NATRIUMNITRIT": RegExp(r"natriumnitrit", caseSensitive: false),
       };
@@ -190,4 +190,3 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
     );
   }
 }
-//Commit for GitHub
