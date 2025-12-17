@@ -57,7 +57,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
       
       String rawText = recognizedText.text.toLowerCase(); 
 
-      // --- V3.2 Regex Logic (Rewe Tested) ---
+      // --- V3.3 Regex Logic (Rewe Tested) ---
       final Map<String, RegExp> dangerPatterns = {
         "PHOSPHAT/SÄURE": RegExp(r"phosph[a|o]", caseSensitive: false), 
         "E450 (Diphosphat)": RegExp(r"e[\s:.-]*450", caseSensitive: false), 
@@ -67,8 +67,10 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
         "E341": RegExp(r"e[\s:-]*341", caseSensitive: false),
         "E451": RegExp(r"e[\s:-]*451", caseSensitive: false),
         "E452": RegExp(r"e[\s:-]*452", caseSensitive: false),
-        "KALIUM": RegExp(r"k[a|o]l[i]?ium", caseSensitive: false),
-        "GESCHMACKSVERSTÄRKER": RegExp(r"geschmacksverstärker", caseSensitive: false),
+        "E621 (MSG/Glutamat)": RegExp(r"e[\s:-]*621", caseSensitive: false),
+        "KALIUM": RegExp(r"k[a|o]l[i]?um", caseSensitive: false), 
+        "HEFEEXTRAKT (Verstecktes Phosphat)": RegExp(r"hefeextrakt", caseSensitive: false),
+        "GESCHMACKSVERSTÄRKER": RegExp(r"geschmacks.*(stärker|starter|staerker)", caseSensitive: false),
         "NATRIUMNITRIT": RegExp(r"natriumnitrit", caseSensitive: false),
       };
 
@@ -137,7 +139,7 @@ class _OcrScannerScreenState extends State<OcrScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("MedicalSnap Cloud v1"), backgroundColor: Colors.teal),
+      appBar: AppBar(title: const Text("MedicalSnap Cloud v1.2"), backgroundColor: Colors.teal),
       body: SingleChildScrollView(
         child: Column(
           children: [
