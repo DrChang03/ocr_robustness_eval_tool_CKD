@@ -18,7 +18,7 @@ class SupabaseService {
       await _client.from('field_test_data').insert({
         'ocr_raw_text': rawText,
         'detected_keywords': detectedKeywords,
-        'material_type': 'Unknown (App Scan)',
+        'material_type': null,
         'product_name': 'Scan at ${DateTime.now().hour}:${DateTime.now().minute}',
         // 'manual_verification': null // Data cleaning later HitL process
       });
