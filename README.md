@@ -44,6 +44,12 @@ flutter run \
 
 ⏸️ **Paused** — core functionality complete, development temporarily on hold.
 
+> ⚠️ **Disclaimer:** This tool is intended for research and testing purposes 
+> only.
+> Detected 80 out of 84 tested products (95.2% accuracy). 
+> Do not use for medical decisions. The developer assumes no liability 
+> for incorrect ingredient detection.
+
 ## License
 
 MIT — Daniel Chen 2025
