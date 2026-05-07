@@ -1,43 +1,49 @@
-# Mobile OCR Robustness Evaluation Tool
+# OCR Robustness Evaluation Tool
 
-**Status:** Active Development (Prototype)
-**Developer:** Daniel Chen
-**License:** Proprietary / Confidential
+A mobile framework for evaluating On-Device OCR accuracy on curved,
+reflective, and transparent surfaces under low-light conditions.
 
-## 1. Project Overview
+## Use Case
 
-This repository contains the source code for a mobile data collection framework designed to evaluate the robustness of On-Device OCR (Optical Character Recognition) in challenging real-world environments.
+Detects critical food ingredients (e.g., Phosphates, Potassium, E450)
+relevant to dietary restrictions for CKD (Chronic Kidney Disease) patients
+— directly on the device, with results synced to a cloud database.
 
-The primary academic goal is to benchmark text recognition accuracy on **curved, reflective, and transparent surfaces** (e.g., bottles, cans, plastic packaging) under varying low-light conditions.
+## Tech Stack
 
-As a test case, the system implements a post-processing algorithm to detect specific chemical compounds (e.g., Phosphates, Potassium) relevant to Chronic Kidney Disease (CKD) dietary restrictions.
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Flutter (Dart) |
+| OCR Engine | Google ML Kit (On-Device) |
+| Backend | Supabase (PostgreSQL + Auth) |
+| Data Processing | Local regex + string analysis |
+| Privacy | On-Device processing, GDPR compliant |
 
-## 2. Technical Architecture
+## Key Features
 
-The system adheres to a strict "Privacy-by-Design" architecture. All image processing is performed locally on the device (Edge Computing) to ensure data sovereignty and GDPR compliance.
+- **Real-time camera stream** for packaging scan
+- **On-Device OCR** — works offline, full GDPR compliance
+- **Ingredient detection** against a local database of critical compounds
+- **Cloud sync** — evaluation results uploaded to Supabase for analysis
+- **Visual feedback** for instant detection results
+- **Edge Computing** — image processing stays local, only results are synced
 
-*   **Frontend Framework:** Flutter (Dart)
-*   **OCR Engine:** Google ML Kit (On-Device Text Recognition API)
-*   **Data Processing:** Local regex pattern matching and string analysis
-*   **Privacy:** Zero-knowledge architecture (No image upload to external servers)
+## Setup
 
-## 3. Key Features
-
-*   **Camera Stream Integration:** Real-time capture of packaging data.
-*   **Text Extraction:** Converting visual data into structured string streams.
-*   **Keyword Filtering:** Algorithm to match extracted text against a local database of critical ingredients (e.g., "E450", "Diphosphat").
-*   **User Feedback Loop:** Visual status indicators for detection results.
-
-## 4. Setup & Usage
-
-**Prerequisites:** Flutter SDK (v3.x+) and Android Studio.
+**Prerequisites:** Flutter SDK (v3.x+), Android Studio and a Supabase project
 
 ```bash
-# Clone the repository
 git clone https://github.com/DrChang03/ocr-robustness-eval-tool.git
-
-# Install dependencies
 flutter pub get
+flutter run \
+  --dart-define=SUPABASE_URL=YOUR_URL \
+  --dart-define=SUPABASE_ANON_KEY=YOUR_KEY
+```
 
-# Run on physical device
-flutter run
+## Status
+
+⏸️ **Paused** — core functionality complete, development temporarily on hold.
+
+## License
+
+MIT — Daniel Chen 2025
