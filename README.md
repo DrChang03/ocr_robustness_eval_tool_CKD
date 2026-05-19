@@ -16,7 +16,7 @@
 
 Scan results, including raw OCR text and detected keywords, are uploaded to a cloud database to support ongoing research into label readability and ingredient detection robustness in real-world retail environments.
 
-> **This is a research and field-testing tool, not a medical device. See the [Disclaimer](#disclaimer).**
+> **This is a research and field-testing tool, not a medical device. See the [Disclaimer](#⚠️ Medical Disclaimer).**
 
 ---
 
