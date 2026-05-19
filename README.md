@@ -16,7 +16,7 @@
 
 Scan results, including raw OCR text and detected keywords, are uploaded to a cloud database to support ongoing research into label readability and ingredient detection robustness in real-world retail environments.
 
-> **This is a research and field-testing tool, not a medical device. See the [Disclaimer](#⚠️ Medical Disclaimer).**
+> **This is a research and field-testing tool, not a medical device. See the [Disclaimer](#%EF%B8%8F-medical-disclaimer).**
 
 ---
 
@@ -111,28 +111,46 @@ supabase_service.dart  ──► Supabase PostgreSQL (field_test_data table)
 
 ### Steps
 
+**1. Clone the repository**
 ```bash
-# 1. Clone the repository
 git clone https://github.com/DrChang03/ocr_robustness_eval_tool_CKD.git
 cd ocr_robustness_eval_tool_CKD
-
-# 2. Install dependencies
-flutter pub get
-
-# 3. Run the app — pass Supabase credentials at build time (do NOT hardcode)
-flutter run \
-  --dart-define=SUPABASE_URL=YOUR_SUPABASE_URL \
-  --dart-define=SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 ```
 
-> **Security note:** Credentials are injected via `--dart-define` and must never be committed to the repository. Add `.env` and any local config files to `.gitignore`.
+**2. Set up your Supabase project**
+
+- Create a free account at [supabase.com](https://supabase.com)
+- Create a new project and open the **SQL Editor**
+- Run the setup script from this repo:
+
+```bash
+# Copy the contents of supabase/schema.sql into the Supabase SQL Editor and execute it
+```
+
+Or paste [`supabase/schema.sql`](supabase/schema.sql) directly. This creates the `field_test_data` table and the required Row Level Security policies.
+
+- Copy your **Project URL** and **anon public key** from *Project Settings → API*
+
+**3. Install Flutter dependencies**
+```bash
+flutter pub get
+```
+
+**4. Run the app — pass your credentials at build time**
+```bash
+flutter run \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
+```
+
+> **Security note:** Credentials are injected via `--dart-define` and must never be committed to the repository.
 
 For a release build:
 
 ```bash
 flutter build apk \
-  --dart-define=SUPABASE_URL=YOUR_SUPABASE_URL \
-  --dart-define=SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your-anon-key
 ```
 
 ---
