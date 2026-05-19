@@ -169,13 +169,27 @@ flutter build apk \
 
 | Metric | Value |
 |---|---|
-| Products tested | 84 |
-| Correct detections | 80 |
+| Products tested | 42 (field export) / 84 (total manual evaluation) |
+| Correct detections | 80 / 84 |
 | Overall accuracy | **95.2%** |
-| Test corpus | Rewe supermarket products (German labels) |
-| Detection engine version | v3.3 |
+| Test location | Rewe supermarket (German labels) |
+| Detection engine | v3.3 (regex) |
+| Study period | 2025-12-14 – 2025-12-17 |
 
-Testing was conducted in field conditions using physical product packaging under varied lighting. The 4 misses were primarily attributable to low-contrast label printing and non-standard font rendering affecting OCR confidence, not failures in the regex detection logic itself.
+### Methodology
+
+Testing was conducted as a **continuous field session** with iterative bugfix versioning — every error discovered during scanning triggered an immediate fix and a version increment (V1.0 → V1.1 → ...). This means the dataset spans multiple app versions within a single session.
+
+**Test conditions:**
+- **Lighting:** Low light only — monitor/screen brightness as sole light source
+- **Materials:** Kunststoff (plastic), Verbundstoffe (composite), Metall, Pappe/Papier, Glas
+
+**Known failure modes:**
+- Curved surfaces distort printed text — OCR merges or drops characters along the curve (e.g. `kalumjodat` instead of `Kaliumjodat`)
+- Reflective packaging introduces scan noise
+- Low-contrast labels under low light reduce OCR confidence
+
+> Raw scan data and full field notes are available in [`data/`](data/RESULTS.md).
 
 ---
 
