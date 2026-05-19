@@ -6,6 +6,23 @@
 
 ---
 
+## ⚠️ Data Quality Notice
+
+> **This dataset is a mixed export across multiple app versions and test sessions.**  
+> Results should not be interpreted as a single controlled study.
+
+| Aspect | Detail |
+|---|---|
+| App versions in dataset | Multiple versions combined (V1.0, V1.1 confirmed in notes; earlier versions may also be present) |
+| Test conditions | Mixed — varied lighting, surface types, and label formats across sessions |
+| Detection logic | Regex engine evolved across versions; earlier scans used older pattern matching |
+| Comparability | Cross-version comparison of detection rates is **not reliable** without version-level filtering |
+| Recommended use | Use as a raw corpus for OCR text analysis only — not as benchmark accuracy data |
+
+For version-specific analysis, filter by the `notes` column (field researchers recorded version tags such as `V1.0`, `V1.1`).
+
+---
+
 ## Summary
 
 | Metric | Value |
