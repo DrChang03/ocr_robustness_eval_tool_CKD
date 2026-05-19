@@ -8,18 +8,26 @@
 
 ## ⚠️ Data Quality Notice
 
-> **This dataset is a mixed export across multiple app versions and test sessions.**  
-> Results should not be interpreted as a single controlled study.
+> **This dataset spans multiple iterative bugfix versions collected during a single field test session (2025-12-14 – 2025-12-17).**  
+> Each detected error during testing triggered an immediate fix and a new version increment.  
+> Results should not be interpreted as a single controlled benchmark.
+
+### Testing Methodology
 
 | Aspect | Detail |
 |---|---|
-| App versions in dataset | Multiple versions combined (V1.0, V1.1 confirmed in notes; earlier versions may also be present) |
-| Test conditions | Mixed — varied lighting, surface types, and label formats across sessions |
-| Detection logic | Regex engine evolved across versions; earlier scans used older pattern matching |
-| Comparability | Cross-version comparison of detection rates is **not reliable** without version-level filtering |
-| Recommended use | Use as a raw corpus for OCR text analysis only — not as benchmark accuracy data |
+| Versioning approach | Continuous — every bug found during testing → immediate fix → version increment |
+| Versions in dataset | V1.0 (initial), V1.1 (post-fix); version tag recorded manually in `notes` column |
+| Lighting condition | **Low light only** — screen/monitor brightness as sole light source |
+| Surface materials tested | Kunststoff (plastic), Verbundstoffe (composite), Metall, Pappe/Papier, Glas |
+| Detection logic | Regex engine updated between versions; earlier scans reflect older pattern matching |
+| Comparability | Cross-version detection rates are **not directly comparable** — regex rules changed mid-session |
+| Recommended use | Raw OCR text corpus and edge-case documentation — not a final accuracy benchmark |
 
-For version-specific analysis, filter by the `notes` column (field researchers recorded version tags such as `V1.0`, `V1.1`).
+### Known Limitations from Field Notes
+- Curved surfaces caused word distortion (e.g. `kalumjodat` instead of `Kaliumjodat`) — OCR merged characters printed along a curve
+- Reflective packaging surfaces introduced scan noise
+- Low-light conditions reduced OCR confidence on low-contrast labels
 
 ---
 
